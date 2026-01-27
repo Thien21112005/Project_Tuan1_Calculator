@@ -1,69 +1,44 @@
 package com.example.calculator.ui;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.TextView;
 
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
-import com.example.calculator.CalculatorContract;
+
 import com.example.calculator.R;
-import com.example.calculator.presenter.CalculatorPresenter;
-import com.google.android.material.button.MaterialButton;
 
 import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity implements CalculatorContract.View {
+public class MainActivity extends AppCompatActivity {
 
-    private TextView tvResult, tvExpression;
-    private CalculatorPresenter presenter;
+    // --- KHAI BÁO BIẾN ---
+    TextView tvResult;      // Hiển thị số to (kết quả)
+    TextView tvEquation;    // MỚI: Hiển thị biểu thức (9 + 9)
+
+    String operator = "";
+    double firstNumber = 0;
+    boolean isNewOp = true;
+
+    // MỚI: Biến lưu toàn bộ biểu thức để hiển thị dòng trên
+    String expressionString = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        tvResult = findViewById(R.id.tvResult);
-        tvExpression = findViewById(R.id.tvExpression);
-
-        presenter = new CalculatorPresenter(this);
-
-        setupButtonListeners();
-    }
-
-    private void setupButtonListeners() {
-        int[] buttonIds = {
-                R.id.btn0, R.id.btn1, R.id.btn2, R.id.btn3, R.id.btn4,
-                R.id.btn5, R.id.btn6, R.id.btn7, R.id.btn8, R.id.btn9,
-                R.id.btnDot, R.id.btnAdd, R.id.btnSubtract, R.id.btnMultiply,
-                R.id.btnDivide, R.id.btnEquals, R.id.btnClear, R.id.btnDelete,
-                R.id.btnPercent, R.id.btnPlusMinus, R.id.btnSin, R.id.btnCos,
-                R.id.btnTan, R.id.btnLog, R.id.btnLn, R.id.btnPower,
-                R.id.btnSqrt, R.id.btnPi, R.id.btnE, R.id.btnOpenParen,
-                R.id.btnCloseParen, R.id.btnFactorial
-        };
-
-        Arrays.stream(buttonIds).forEach(id -> {
-            MaterialButton button = findViewById(id);
-            if (button != null) {
-                button.setOnClickListener(v ->
-                        presenter.onButtonClick(v, button.getText().toString()));
-            }
+        // Code xử lý tràn viền của bạn
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
         });
-    }
-
-    @Override
-    public void updateResult(String result) {
-        tvResult.setText(result);
-    }
-
-    @Override
-    public void updateExpression(String expression) {
-        tvExpression.setText(expression);
-    }
-
-    @Override
-    public void showError(String message) {
-        tvExpression.setText(message);
-        tvResult.setText("Error");
     }
 }
