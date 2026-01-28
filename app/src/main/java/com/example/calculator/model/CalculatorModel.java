@@ -89,7 +89,7 @@ public class CalculatorModel implements CalculatorContract.Model {
 
     // Private helpers
     private boolean isOperator(String s) {
-        return "+-x/".contains(s);
+        return "+−×÷".contains(s);
     }
 
     private boolean isLastCharOperator() {
@@ -111,8 +111,6 @@ public class CalculatorModel implements CalculatorContract.Model {
         Stack<Double> values = new Stack<>();
         Stack<Character> operators = new Stack<>();
 
-        expr = expr.replace("x", "*");
-
         for (int i = 0; i < expr.length(); i++) {
             char c = expr.charAt(i);
 
@@ -127,7 +125,7 @@ public class CalculatorModel implements CalculatorContract.Model {
                 i--;
                 values.push(Double.parseDouble(sb.toString()));
             }
-            else if (c == '+' || c == '-' || c == '*' || c == '/') {
+            else if (c == '+' || c == '−' || c == '×' || c == '÷') {
                 while (!operators.isEmpty() && hasPrecedence(c, operators.peek())) {
                     values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
                 }
@@ -144,16 +142,16 @@ public class CalculatorModel implements CalculatorContract.Model {
 
     private boolean hasPrecedence(char op1, char op2) {
         if (op2 == '(' || op2 == ')') return false;
-        if ((op1 == '*' || op1 == '/') && (op2 == '+' || op2 == '-')) return false;
+        if ((op1 == '×' || op1 == '÷') && (op2 == '+' || op2 == '−')) return false;
         return true;
     }
 
     private double applyOperator(char operator, double b, double a) {
         switch (operator) {
             case '+': return a + b;
-            case '-': return a - b;
-            case '*': return a * b;
-            case '/':
+            case '−': return a - b;
+            case '×': return a * b;
+            case '÷':
                 if (b == 0) throw new ArithmeticException("Cannot divide by zero");
                 return a / b;
         }
