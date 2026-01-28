@@ -79,7 +79,7 @@
             android:layout_margin="5dp"
             android:background="@drawable/bg_circle_button"
             android:backgroundTint="@color/button_operator"
-            android:text="/"
+            android:text="÷"
             android:textColor="@color/text_white"
             android:textSize="30sp" />
 
@@ -123,7 +123,7 @@
             android:layout_margin="5dp"
             android:background="@drawable/bg_circle_button"
             android:backgroundTint="@color/button_operator"
-            android:text="x"
+            android:text="×"
             android:textColor="@color/text_white"
             android:textSize="30sp" />
 
