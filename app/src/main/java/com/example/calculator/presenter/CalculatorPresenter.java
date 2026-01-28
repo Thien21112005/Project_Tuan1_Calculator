@@ -1,8 +1,8 @@
 package com.example.calculator.presenter;
 
 import com.example.calculator.CalculatorContract;
-import com.example.calculator.model.CalculatorModel; // Giả sử bạn đã có class này
-import com.example.calculator.utils.NumberFormatter; // Giả sử bạn đã có class này
+import com.example.calculator.model.CalculatorModel;
+import com.example.calculator.utils.NumberFormatter;
 
 public class CalculatorPresenter implements CalculatorContract.Presenter {
 
@@ -18,7 +18,7 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
         this.model = new CalculatorModel();
     }
 
-    // --- 1. XỬ LÝ KHI BẤM SỐ ---
+    // --- 1. XỬ LÝ KHI BẤM SỐ (ĐÃ SỬA LOGIC CHẶN DẤU CHẤM) ---
     @Override
     public void onNumberClicked(String number) {
         // Nếu trước đó vừa ra kết quả (VD: bấm = ra 10), giờ bấm số mới thì reset lại từ đầu
@@ -28,7 +28,30 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
             view.showEquation("");
         }
 
-        expression += number; // Nối thêm số vào chuỗi (VD: "5" -> "52")
+        // --- BẮT ĐẦU SỬA: Kiểm tra kỹ trước khi thêm ---
+
+        if (number.equals(".")) {
+            // Nếu người dùng bấm dấu chấm:
+
+            // Trường hợp 1: Chưa nhập gì hoặc ký tự cuối là phép tính (VD: "5+")
+            // -> Tự động thêm số 0 đằng trước thành "0." cho hợp lý
+            if (expression.isEmpty() || isLastCharOperator()) {
+                expression += "0.";
+            }
+            // Trường hợp 2: Đang nhập dở số (VD: "12"), kiểm tra xem số này ĐÃ CÓ dấu chấm chưa?
+            // Nếu CHƯA có (!hasDot...) thì mới cho thêm.
+            else if (!hasDotInCurrentNumber()) {
+                expression += ".";
+            }
+            // Trường hợp 3: Nếu đã có rồi (VD: "12.5") -> Thì lờ đi, không làm gì cả.
+
+        } else {
+            // Nếu là số bình thường (0-9) thì thêm như cũ
+            expression += number;
+        }
+
+        // --- KẾT THÚC SỬA ---
+
         view.showResult(expression); // Hiển thị ra màn hình
     }
 
@@ -61,7 +84,7 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
         if (expression.isEmpty()) return;
 
         try {
-            // Gọi Model để tính toán (Model chứa thư viện exp4j hoặc logic tính toán)
+            // Gọi Model để tính toán
             double result = model.evaluate(expression);
 
             // Format số đẹp (bỏ số 0 thừa ở đuôi .0)
@@ -105,8 +128,39 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
         view.showResult(expression.isEmpty() ? "0" : expression);
     }
 
-    // --- HÀM PHỤ TRỢ (Private) ---
+    // --- CÁC HÀM PHỤ TRỢ (Private) ---
+
+    // 1. Kiểm tra ký tự có phải phép tính không
     private boolean isOperator(String s) {
         return "+-x/".contains(s);
+    }
+
+    // 2. Kiểm tra ký tự cuối cùng của chuỗi hiện tại có phải là phép tính không
+    // (Dùng để bổ trợ cho logic thêm dấu chấm)
+    private boolean isLastCharOperator() {
+        if (expression.isEmpty()) return false;
+        char lastChar = expression.charAt(expression.length() - 1);
+        return isOperator(String.valueOf(lastChar));
+    }
+
+    // 3. Kiểm tra xem con số HIỆN TẠI (số cuối cùng đang nhập) đã có dấu chấm chưa
+    private boolean hasDotInCurrentNumber() {
+        // Duyệt ngược từ cuối chuỗi về đầu
+        for (int i = expression.length() - 1; i >= 0; i--) {
+            char c = expression.charAt(i);
+
+            // Nếu gặp dấu chấm -> Báo là CÓ RỒI (true)
+            if (c == '.') {
+                return true;
+            }
+
+            // Nếu gặp phép tính (+ - * /) -> Nghĩa là đã hết con số hiện tại -> Báo là CHƯA CÓ (false)
+            // Ví dụ: biểu thức là "5.5 + 2" -> đang kiểm tra số 2, gặp dấu + là dừng kiểm tra.
+            if (isOperator(String.valueOf(c))) {
+                return false;
+            }
+        }
+        // Duyệt hết mà không thấy gì -> Chưa có
+        return false;
     }
 }
