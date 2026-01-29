@@ -26,14 +26,21 @@ public class CalculatorModel implements CalculatorContract.Model {
     }
     @Override
     public void inputOperator(String operator) {
-        if (expression.isEmpty()) return;
+        if (expression.isEmpty()) {
+            if (operator.equals("-")) {
+                expression = "-";
+            }
+            return;
+        }
 
         if (isResultShown) {
             isResultShown = false;
             previousExpression = "";
         }
+
         char lastChar = expression.charAt(expression.length() - 1);
-        if (isOperator(lastChar)) {  // Sửa: dùng isOperator(char)
+
+        if (isOperator(lastChar) && !operator.equals("-")) {
             expression = expression.substring(0, expression.length() - 1);
         }
 
