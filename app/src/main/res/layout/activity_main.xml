@@ -7,36 +7,57 @@
     android:orientation="vertical"
     android:padding="20dp">
 
-    <TextView
-        android:id="@+id/tv_equation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="end"
-        android:paddingEnd="10dp"
-        android:text=""
-        android:textColor="#A5A5A5"
-        android:textSize="40sp"
-        android:maxLines="1"
-        android:ellipsize="start" />
-    <TextView
-        android:id="@+id/tv_result"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
+    <!-- ScrollView cho biểu thức - CỐ ĐỊNH CHIỀU CAO -->
+
+    <ScrollView
+        android:id="@+id/scroll_view_equation"
+        android:layout_width="390dp"
+        android:layout_height="158dp"
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/tv_equation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="bottom|end"
+            android:maxLines="10"
+            android:paddingEnd="10dp"
+            android:scrollbars="vertical"
+            android:text=""
+            android:textColor="#A5A5A5"
+            android:textSize="40sp" />
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/scroll_view_result"
+        android:layout_width="390dp"
+        android:layout_height="125dp"
         android:layout_weight="1"
-        android:gravity="bottom|end"
-        android:text="0"
-        android:textColor="@color/text_white"
-        android:textSize="80sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:textStyle="bold" />
+        android:fadeScrollbars="false"
+        android:scrollbars="vertical">
+
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="bottom|end"
+            android:maxLines="20"
+            android:scrollbars="vertical"
+            android:text="0"
+            android:textColor="@color/text_white"
+            android:textSize="80sp"
+            android:textStyle="bold" />
+    </ScrollView>
 
     <GridLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:alignmentMode="alignMargins"
         android:columnCount="4"
-        android:rowCount="5"
-        android:alignmentMode="alignMargins">
+        android:rowCount="5">
 
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/btn_ac"
