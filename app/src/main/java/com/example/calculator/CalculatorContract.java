@@ -14,6 +14,7 @@ public interface CalculatorContract {
         void onEqualClicked();
         void onClearClicked();
         void onDeleteClicked();
+        void onPercentClicked();
 
         void attachView(View view);
         void detachView();
@@ -22,6 +23,7 @@ public interface CalculatorContract {
     interface Model {
         void inputNumber(String number);
         void inputOperator(String operator);
+        void percent();
         void calculate();
         void clear();
         void delete();

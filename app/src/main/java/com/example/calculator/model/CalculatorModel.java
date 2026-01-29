@@ -40,6 +40,18 @@ public class CalculatorModel implements CalculatorContract.Model {
         expression += operator;
     }
     @Override
+    public void percent(){
+        if (expression.isEmpty()) return;
+
+        if (isResultShown) {
+            isResultShown = false;
+            previousExpression = "";
+        }
+        char lastChar = expression.charAt(expression.length() - 1);
+        if (isOperator(lastChar)) return;
+        expression += "%";
+    }
+    @Override
     public void calculate() {
         if (expression.isEmpty()) return;
 
@@ -91,6 +103,8 @@ public class CalculatorModel implements CalculatorContract.Model {
         return c == '+' || c == '-' || c == '×' || c == '÷';
     }
 
+    private boolean isPercent(char c) {return c == '%';}
+
     private boolean isLastCharOperator() {
         if (expression.isEmpty()) return false;
         char lastChar = expression.charAt(expression.length() - 1);
@@ -139,6 +153,13 @@ public class CalculatorModel implements CalculatorContract.Model {
                 i--; // Lùi lại 1 vị trí
                 values.push(Double.parseDouble(sb.toString()));
             }
+            else if (isPercent(c)) {
+                if (values.isEmpty()) {
+                    throw new RuntimeException("Invalid percent");
+                }
+                double val = values.pop();
+                values.push(val / 100);
+            }
             // Xử lý toán tử binary (không phải unary minus)
             else if (isOperator(c)) {  // Sửa: dùng isOperator(char)
                 while (!operators.isEmpty() && hasPrecedence(c, operators.peek())) {
@@ -168,6 +189,10 @@ public class CalculatorModel implements CalculatorContract.Model {
                 return a / b;
             default: return 0;
         }
+    }
+
+    private double applyPercent(double num){
+        return num/100;
     }
     private String formatNumber(double number) {
         if (Double.isNaN(number)) return "Error";

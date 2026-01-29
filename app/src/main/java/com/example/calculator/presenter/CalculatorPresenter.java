@@ -64,6 +64,12 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
         updateDisplay();
     }
 
+    @Override
+    public void onPercentClicked(){
+        model.percent();
+        updateDisplay();
+    }
+
     private void updateDisplay() {
         if (view != null) {
             view.showResult(model.getCurrentResult());

@@ -85,6 +85,8 @@ public class MainActivity extends AppCompatActivity
                 presenter.onDeleteClicked());
         findViewById(R.id.btn_equal).setOnClickListener(v ->
                 presenter.onEqualClicked());
+        findViewById(R.id.btn_percent).setOnClickListener(v ->
+                presenter.onPercentClicked());
     }
 
     @Override
