@@ -3,6 +3,7 @@ package com.example.calculator.ui;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -21,6 +22,8 @@ public class MainActivity extends AppCompatActivity
 
     private TextView tvResult;
     private TextView tvEquation;
+    private ScrollView scrollViewResult;
+    private ScrollView scrollViewEquation;
     private CalculatorContract.Presenter presenter;
 
     @Override
@@ -40,8 +43,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void initViews() {
-        tvResult = findViewById(R.id.tv_result);
         tvEquation = findViewById(R.id.tv_equation);
+        tvResult = findViewById(R.id.tv_result);
+        scrollViewResult = findViewById(R.id.scroll_view_result);
+        scrollViewEquation = findViewById(R.id.scroll_view_equation);
+
+        // Cấu hình để TextView có thể cuộn
+        tvResult.setMovementMethod(new android.text.method.ScrollingMovementMethod());
+        tvEquation.setMovementMethod(new android.text.method.ScrollingMovementMethod());
+
+        // Cho phép chọn văn bản
+        tvResult.setTextIsSelectable(true);
+        tvEquation.setTextIsSelectable(true);
     }
 
     private void setupMVP() {
@@ -90,11 +103,21 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void showResult(String result) {
         tvResult.setText(result);
+        // Tự động cuộn xuống dưới cùng khi có kết quả mới
+        scrollViewResult.post(() -> {
+            scrollViewResult.fullScroll(View.FOCUS_DOWN);
+            scrollViewResult.smoothScrollTo(0, tvResult.getBottom());
+        });
     }
 
     @Override
     public void showEquation(String equation) {
         tvEquation.setText(equation);
+        // Tự động cuộn xuống dưới cùng khi có kết quả mới
+        scrollViewEquation.post(() -> {
+            scrollViewEquation.fullScroll(View.FOCUS_DOWN);
+            scrollViewEquation.smoothScrollTo(0, tvEquation.getBottom());
+        });
     }
 
     @Override
