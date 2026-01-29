@@ -1,22 +1,34 @@
 package com.example.calculator.model;
 
 import com.example.calculator.CalculatorContract;
+
+import java.util.Locale;
 import java.util.Stack;
 
 public class CalculatorModel implements CalculatorContract.Model {
     private String expression = "";
     private String previousExpression = "";
     private boolean isResultShown = false;
+    private boolean isInputtingNegative = false; // Biến mới để theo dõi trạng thái nhập số âm
+
     @Override
     public void inputNumber(String number) {
         if (isResultShown) {
             expression = "";
             previousExpression = "";
             isResultShown = false;
+            isInputtingNegative = false; // Reset trạng thái
         }
+
+        // Nếu đang nhập số âm và nhập số đầu tiên sau dấu trừ
+        if (isInputtingNegative && !number.equals(".")) {
+            isInputtingNegative = false; // Tắt trạng thái nhập số âm
+        }
+
         if (number.equals(".")) {
-            if (expression.isEmpty() || isLastCharOperator()) {
+            if (expression.isEmpty() || isLastCharOperator() || isInputtingNegative) {
                 expression += "0.";
+                isInputtingNegative = false; // Tắt trạng thái nhập số âm
             } else if (!hasDotInCurrentNumber()) {
                 expression += ".";
             }
@@ -26,12 +38,19 @@ public class CalculatorModel implements CalculatorContract.Model {
     }
     @Override
     public void inputOperator(String operator) {
-        if (expression.isEmpty()) {
-            if (operator.equals("-")) {
-                expression = "-";
-            }
+        // Cho phép bắt đầu bằng số âm
+        if (expression.isEmpty() && operator.equals("-")) {
+            expression = "-";
+            isInputtingNegative = true; // Bật trạng thái nhập số âm
             return;
         }
+
+        // Nếu đang trong trạng thái nhập số âm, không cho phép nhập toán tử khác
+        if (isInputtingNegative) {
+            return;
+        }
+
+        if (expression.isEmpty()) return;
 
         if (isResultShown) {
             isResultShown = false;
@@ -40,15 +59,20 @@ public class CalculatorModel implements CalculatorContract.Model {
 
         char lastChar = expression.charAt(expression.length() - 1);
 
-        if (isOperator(lastChar) && !operator.equals("-")) {
+        if (isOperator(lastChar) && expression.length() != 1) {
             expression = expression.substring(0, expression.length() - 1);
         }
 
         expression += operator;
     }
     @Override
-    public void percent(){
+    public void percent() {
         if (expression.isEmpty()) return;
+
+        // Nếu đang trong trạng thái nhập số âm, không cho phép nhập %
+        if (isInputtingNegative) {
+            return;
+        }
 
         if (isResultShown) {
             isResultShown = false;
@@ -62,11 +86,17 @@ public class CalculatorModel implements CalculatorContract.Model {
     public void calculate() {
         if (expression.isEmpty()) return;
 
+        // Nếu đang trong trạng thái nhập số âm mà chưa có số
+        if (isInputtingNegative) {
+            throw new RuntimeException("Invalid expression");
+        }
+
         try {
             previousExpression = expression;
             double result = evaluateExpression(expression);
             expression = formatNumber(result);
             isResultShown = true;
+            isInputtingNegative = false; // Reset trạng thái sau khi tính toán
         } catch (Exception e) {
             throw new RuntimeException("Invalid expression");
         }
@@ -76,13 +106,23 @@ public class CalculatorModel implements CalculatorContract.Model {
         expression = "";
         previousExpression = "";
         isResultShown = false;
+        isInputtingNegative = false; // Reset trạng thái
     }
+
     @Override
     public void delete() {
         if (expression.isEmpty() || isResultShown) {
             expression = "";
             previousExpression = "";
             isResultShown = false;
+            isInputtingNegative = false; // Reset trạng thái
+            return;
+        }
+
+        // Nếu xóa hết đến chỉ còn dấu "-"
+        if (expression.equals("-")) {
+            expression = "";
+            isInputtingNegative = false; // Reset trạng thái
             return;
         }
 
@@ -115,7 +155,11 @@ public class CalculatorModel implements CalculatorContract.Model {
     private boolean isLastCharOperator() {
         if (expression.isEmpty()) return false;
         char lastChar = expression.charAt(expression.length() - 1);
-        return isOperator(lastChar);  // Sửa: dùng isOperator(char)
+        // Nếu đang trong trạng thái nhập số âm, không coi dấu '-' cuối cùng là toán tử
+        if (isInputtingNegative && lastChar == '-') {
+            return false;
+        }
+        return isOperator(lastChar);
     }
 
     private boolean hasDotInCurrentNumber() {
@@ -164,8 +208,7 @@ public class CalculatorModel implements CalculatorContract.Model {
                 if (values.isEmpty()) {
                     throw new RuntimeException("Invalid percent");
                 }
-                double val = values.pop();
-                values.push(val / 100);
+                values.push(values.pop() / 100);
             }
             // Xử lý toán tử binary (không phải unary minus)
             else if (isOperator(c)) {  // Sửa: dùng isOperator(char)
@@ -197,15 +240,11 @@ public class CalculatorModel implements CalculatorContract.Model {
             default: return 0;
         }
     }
-
-    private double applyPercent(double num){
-        return num/100;
-    }
     private String formatNumber(double number) {
         if (Double.isNaN(number)) return "Error";
         if (Double.isInfinite(number)) return "∞";
-        String result = String.format("%.10f", number);
-        result = result.replaceAll("0+$", "").replaceAll("\\.$", "");
-        return result;
+        double rounded = Math.round(number * 1e10) / 1e10;
+        String result = String.format(Locale.US, "%.10f", rounded);
+        return result.replaceAll("\\.0+$|0+$|\\.$", "");
     }
 }
