@@ -9,7 +9,6 @@ public class CalculatorModel implements CalculatorContract.Model {
     private String expression = "";
     private String previousExpression = "";
     private boolean isResultShown = false;
-    private boolean isInputtingNegative = false; // Biến mới để theo dõi trạng thái nhập số âm
 
     @Override
     public void inputNumber(String number) {
@@ -17,18 +16,11 @@ public class CalculatorModel implements CalculatorContract.Model {
             expression = "";
             previousExpression = "";
             isResultShown = false;
-            isInputtingNegative = false; // Reset trạng thái
-        }
-
-        // Nếu đang nhập số âm và nhập số đầu tiên sau dấu trừ
-        if (isInputtingNegative && !number.equals(".")) {
-            isInputtingNegative = false; // Tắt trạng thái nhập số âm
         }
 
         if (number.equals(".")) {
-            if (expression.isEmpty() || isLastCharOperator() || isInputtingNegative) {
+            if (expression.isEmpty() || isLastCharOperator() || expression.equals("-")) {
                 expression += "0.";
-                isInputtingNegative = false; // Tắt trạng thái nhập số âm
             } else if (!hasDotInCurrentNumber()) {
                 expression += ".";
             }
@@ -36,17 +28,17 @@ public class CalculatorModel implements CalculatorContract.Model {
             expression += number;
         }
     }
+
     @Override
     public void inputOperator(String operator) {
         // Cho phép bắt đầu bằng số âm
         if (expression.isEmpty() && operator.equals("-")) {
             expression = "-";
-            isInputtingNegative = true; // Bật trạng thái nhập số âm
             return;
         }
 
-        // Nếu đang trong trạng thái nhập số âm, không cho phép nhập toán tử khác
-        if (isInputtingNegative) {
+        // Chặn nhập operator nếu chỉ có dấu "-"
+        if (expression.length() == 1 && expression.equals("-")) {
             return;
         }
 
@@ -65,12 +57,13 @@ public class CalculatorModel implements CalculatorContract.Model {
 
         expression += operator;
     }
+
     @Override
     public void percent() {
         if (expression.isEmpty()) return;
 
-        // Nếu đang trong trạng thái nhập số âm, không cho phép nhập %
-        if (isInputtingNegative) {
+        // Chặn nhập % nếu chỉ có dấu "-"
+        if (expression.equals("-")) {
             return;
         }
 
@@ -78,16 +71,18 @@ public class CalculatorModel implements CalculatorContract.Model {
             isResultShown = false;
             previousExpression = "";
         }
+
         char lastChar = expression.charAt(expression.length() - 1);
         if (isOperator(lastChar)) return;
         expression += "%";
     }
+
     @Override
     public void calculate() {
         if (expression.isEmpty()) return;
 
-        // Nếu đang trong trạng thái nhập số âm mà chưa có số
-        if (isInputtingNegative) {
+        // Chặn tính toán nếu chỉ có dấu "-"
+        if (expression.equals("-")) {
             throw new RuntimeException("Invalid expression");
         }
 
@@ -96,17 +91,16 @@ public class CalculatorModel implements CalculatorContract.Model {
             double result = evaluateExpression(expression);
             expression = formatNumber(result);
             isResultShown = true;
-            isInputtingNegative = false; // Reset trạng thái sau khi tính toán
         } catch (Exception e) {
             throw new RuntimeException("Invalid expression");
         }
     }
+
     @Override
     public void clear() {
         expression = "";
         previousExpression = "";
         isResultShown = false;
-        isInputtingNegative = false; // Reset trạng thái
     }
 
     @Override
@@ -115,19 +109,18 @@ public class CalculatorModel implements CalculatorContract.Model {
             expression = "";
             previousExpression = "";
             isResultShown = false;
-            isInputtingNegative = false; // Reset trạng thái
             return;
         }
 
         // Nếu xóa hết đến chỉ còn dấu "-"
-        if (expression.equals("-")) {
+        if (expression.length() == 2 && expression.charAt(0) == '-') {
             expression = "";
-            isInputtingNegative = false; // Reset trạng thái
             return;
         }
 
         expression = expression.substring(0, expression.length() - 1);
     }
+
     @Override
     public String getCurrentExpression() {
         if (isResultShown && !previousExpression.isEmpty()) {
@@ -135,6 +128,7 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
         return expression;
     }
+
     @Override
     public String getCurrentResult() {
         return expression.isEmpty() ? "0" : expression;
@@ -150,15 +144,19 @@ public class CalculatorModel implements CalculatorContract.Model {
         return c == '+' || c == '-' || c == '×' || c == '÷';
     }
 
-    private boolean isPercent(char c) {return c == '%';}
+    private boolean isPercent(char c) {
+        return c == '%';
+    }
 
     private boolean isLastCharOperator() {
         if (expression.isEmpty()) return false;
         char lastChar = expression.charAt(expression.length() - 1);
-        // Nếu đang trong trạng thái nhập số âm, không coi dấu '-' cuối cùng là toán tử
-        if (isInputtingNegative && lastChar == '-') {
+
+        // Nếu biểu thức chỉ là "-", không coi là toán tử
+        if (expression.equals("-")) {
             return false;
         }
+
         return isOperator(lastChar);
     }
 
@@ -166,7 +164,7 @@ public class CalculatorModel implements CalculatorContract.Model {
         for (int i = expression.length() - 1; i >= 0; i--) {
             char c = expression.charAt(i);
             if (c == '.') return true;
-            if (isOperator(c)) return false;  // Sửa: dùng isOperator(char)
+            if (isOperator(c)) return false;
         }
         return false;
     }
@@ -211,7 +209,7 @@ public class CalculatorModel implements CalculatorContract.Model {
                 values.push(values.pop() / 100);
             }
             // Xử lý toán tử binary (không phải unary minus)
-            else if (isOperator(c)) {  // Sửa: dùng isOperator(char)
+            else if (isOperator(c)) {
                 while (!operators.isEmpty() && hasPrecedence(c, operators.peek())) {
                     values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
                 }
@@ -224,11 +222,13 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
         return values.pop();
     }
+
     private boolean hasPrecedence(char op1, char op2) {
         if (op2 == '(' || op2 == ')') return false;
         if ((op1 == '×' || op1 == '÷') && (op2 == '+' || op2 == '-')) return false;
         return true;
     }
+
     private double applyOperator(char operator, double b, double a) {
         switch (operator) {
             case '+': return a + b;
@@ -240,6 +240,7 @@ public class CalculatorModel implements CalculatorContract.Model {
             default: return 0;
         }
     }
+
     private String formatNumber(double number) {
         if (Double.isNaN(number)) return "Error";
         if (Double.isInfinite(number)) return "∞";
