@@ -1,12 +1,15 @@
 package com.example.calculator.model;
 
 import com.example.calculator.CalculatorContract;
+
+import java.util.Locale;
 import java.util.Stack;
 
 public class CalculatorModel implements CalculatorContract.Model {
     private String expression = "";
     private String previousExpression = "";
     private boolean isResultShown = false;
+
     @Override
     public void inputNumber(String number) {
         if (isResultShown) {
@@ -14,8 +17,9 @@ public class CalculatorModel implements CalculatorContract.Model {
             previousExpression = "";
             isResultShown = false;
         }
+
         if (number.equals(".")) {
-            if (expression.isEmpty() || isLastCharOperator()) {
+            if (expression.isEmpty() || isLastCharOperator() || expression.equals("-")) {
                 expression += "0.";
             } else if (!hasDotInCurrentNumber()) {
                 expression += ".";
@@ -24,12 +28,42 @@ public class CalculatorModel implements CalculatorContract.Model {
             expression += number;
         }
     }
+
     @Override
     public void inputOperator(String operator) {
-        if (expression.isEmpty()) {
-            if (operator.equals("-")) {
-                expression = "-";
-            }
+        // Cho phép bắt đầu bằng số âm
+        if (expression.isEmpty() && operator.equals("-")) {
+            expression = "-";
+            return;
+        }
+
+        // Chặn nhập operator nếu chỉ có dấu "-"
+        if (expression.length() == 1 && expression.equals("-")) {
+            return;
+        }
+
+        if (expression.isEmpty()) return;
+
+        if (isResultShown) {
+            isResultShown = false;
+            previousExpression = "";
+        }
+
+        char lastChar = expression.charAt(expression.length() - 1);
+
+        if (isOperator(lastChar) && expression.length() != 1) {
+            expression = expression.substring(0, expression.length() - 1);
+        }
+
+        expression += operator;
+    }
+
+    @Override
+    public void percent() {
+        if (expression.isEmpty()) return;
+
+        // Chặn nhập % nếu chỉ có dấu "-"
+        if (expression.equals("-")) {
             return;
         }
 
@@ -39,28 +73,18 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
 
         char lastChar = expression.charAt(expression.length() - 1);
-
-        if (isOperator(lastChar) && !operator.equals("-")) {
-            expression = expression.substring(0, expression.length() - 1);
-        }
-
-        expression += operator;
-    }
-    @Override
-    public void percent(){
-        if (expression.isEmpty()) return;
-
-        if (isResultShown) {
-            isResultShown = false;
-            previousExpression = "";
-        }
-        char lastChar = expression.charAt(expression.length() - 1);
         if (isOperator(lastChar)) return;
         expression += "%";
     }
+
     @Override
     public void calculate() {
         if (expression.isEmpty()) return;
+
+        // Chặn tính toán nếu chỉ có dấu "-"
+        if (expression.equals("-")) {
+            throw new RuntimeException("Invalid expression");
+        }
 
         try {
             previousExpression = expression;
@@ -71,12 +95,14 @@ public class CalculatorModel implements CalculatorContract.Model {
             throw new RuntimeException("Invalid expression");
         }
     }
+
     @Override
     public void clear() {
         expression = "";
         previousExpression = "";
         isResultShown = false;
     }
+
     @Override
     public void delete() {
         if (expression.isEmpty() || isResultShown) {
@@ -86,8 +112,15 @@ public class CalculatorModel implements CalculatorContract.Model {
             return;
         }
 
+        // Nếu xóa hết đến chỉ còn dấu "-"
+        if (expression.length() == 2 && expression.charAt(0) == '-') {
+            expression = "";
+            return;
+        }
+
         expression = expression.substring(0, expression.length() - 1);
     }
+
     @Override
     public String getCurrentExpression() {
         if (isResultShown && !previousExpression.isEmpty()) {
@@ -95,6 +128,7 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
         return expression;
     }
+
     @Override
     public String getCurrentResult() {
         return expression.isEmpty() ? "0" : expression;
@@ -110,19 +144,27 @@ public class CalculatorModel implements CalculatorContract.Model {
         return c == '+' || c == '-' || c == '×' || c == '÷';
     }
 
-    private boolean isPercent(char c) {return c == '%';}
+    private boolean isPercent(char c) {
+        return c == '%';
+    }
 
     private boolean isLastCharOperator() {
         if (expression.isEmpty()) return false;
         char lastChar = expression.charAt(expression.length() - 1);
-        return isOperator(lastChar);  // Sửa: dùng isOperator(char)
+
+        // Nếu biểu thức chỉ là "-", không coi là toán tử
+        if (expression.equals("-")) {
+            return false;
+        }
+
+        return isOperator(lastChar);
     }
 
     private boolean hasDotInCurrentNumber() {
         for (int i = expression.length() - 1; i >= 0; i--) {
             char c = expression.charAt(i);
             if (c == '.') return true;
-            if (isOperator(c)) return false;  // Sửa: dùng isOperator(char)
+            if (isOperator(c)) return false;
         }
         return false;
     }
@@ -164,11 +206,10 @@ public class CalculatorModel implements CalculatorContract.Model {
                 if (values.isEmpty()) {
                     throw new RuntimeException("Invalid percent");
                 }
-                double val = values.pop();
-                values.push(val / 100);
+                values.push(values.pop() / 100);
             }
             // Xử lý toán tử binary (không phải unary minus)
-            else if (isOperator(c)) {  // Sửa: dùng isOperator(char)
+            else if (isOperator(c)) {
                 while (!operators.isEmpty() && hasPrecedence(c, operators.peek())) {
                     values.push(applyOperator(operators.pop(), values.pop(), values.pop()));
                 }
@@ -181,11 +222,13 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
         return values.pop();
     }
+
     private boolean hasPrecedence(char op1, char op2) {
         if (op2 == '(' || op2 == ')') return false;
         if ((op1 == '×' || op1 == '÷') && (op2 == '+' || op2 == '-')) return false;
         return true;
     }
+
     private double applyOperator(char operator, double b, double a) {
         switch (operator) {
             case '+': return a + b;
@@ -198,14 +241,11 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
     }
 
-    private double applyPercent(double num){
-        return num/100;
-    }
     private String formatNumber(double number) {
         if (Double.isNaN(number)) return "Error";
         if (Double.isInfinite(number)) return "∞";
-        String result = String.format("%.10f", number);
-        result = result.replaceAll("0+$", "").replaceAll("\\.$", "");
-        return result;
+        double rounded = Math.round(number * 1e10) / 1e10;
+        String result = String.format(Locale.US, "%.10f", rounded);
+        return result.replaceAll("\\.0+$|0+$|\\.$", "");
     }
 }
