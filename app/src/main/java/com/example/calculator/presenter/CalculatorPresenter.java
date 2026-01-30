@@ -70,6 +70,11 @@ public class CalculatorPresenter implements CalculatorContract.Presenter {
         updateDisplay();
     }
 
+    @Override
+    public void onHistoryClicked(){
+        model.history();
+    }
+
     private void updateDisplay() {
         if (view != null) {
             view.showResult(model.getCurrentResult());

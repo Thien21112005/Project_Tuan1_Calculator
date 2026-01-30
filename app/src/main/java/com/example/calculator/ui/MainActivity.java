@@ -1,12 +1,16 @@
 package com.example.calculator.ui;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -26,6 +30,8 @@ public class MainActivity extends AppCompatActivity
     private ScrollView scrollViewEquation;
     private CalculatorContract.Presenter presenter;
 
+    private ActivityResultLauncher<Intent> historyLauncher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +46,7 @@ public class MainActivity extends AppCompatActivity
         initViews();
         setupMVP();
         setButtonListeners();
+        setupHistoryLauncher();
     }
 
     private void initViews() {
@@ -58,9 +65,28 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setupMVP() {
-        CalculatorContract.Model model = new CalculatorModel();
+        CalculatorContract.Model model = new CalculatorModel(this);
         presenter = new CalculatorPresenter(model);
         presenter.attachView(this);
+    }
+
+    private void setupHistoryLauncher() {
+        historyLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Intent data = result.getData();
+                        String expression = data.getStringExtra("expression");
+                        String resultValue = data.getStringExtra("result");
+
+                        if (expression != null && resultValue != null) {
+                            // Hiển thị lại biểu thức và kết quả từ lịch sử
+                            showEquation(expression);
+                            showResult(resultValue);
+                        }
+                    }
+                }
+        );
     }
 
     private void setButtonListeners() {
@@ -100,6 +126,13 @@ public class MainActivity extends AppCompatActivity
                 presenter.onEqualClicked());
         findViewById(R.id.btn_percent).setOnClickListener(v ->
                 presenter.onPercentClicked());
+
+        // Nút History
+        ImageButton btnHistory = findViewById(R.id.btn_history);
+        btnHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+            historyLauncher.launch(intent);
+        });
     }
 
     @Override

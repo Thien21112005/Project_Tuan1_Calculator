@@ -1,5 +1,7 @@
 package com.example.calculator.model;
 
+import android.content.Context;
+
 import com.example.calculator.CalculatorContract;
 
 import java.util.Locale;
@@ -9,6 +11,11 @@ public class CalculatorModel implements CalculatorContract.Model {
     private String expression = "";
     private String previousExpression = "";
     private boolean isResultShown = false;
+    private HistoryModel historyModel;
+
+    public CalculatorModel(Context context) {
+        this.historyModel = new HistoryModel(context);
+    }
 
     @Override
     public void inputNumber(String number) {
@@ -89,7 +96,13 @@ public class CalculatorModel implements CalculatorContract.Model {
         try {
             previousExpression = expression;
             double result = evaluateExpression(expression);
-            expression = formatNumber(result);
+            String resultString = formatNumber(result);
+
+            // Lưu vào lịch sử
+            HistoryItem historyItem = new HistoryItem(previousExpression, resultString);
+            historyModel.addHistory(historyItem);
+
+            expression = resultString;
             isResultShown = true;
         } catch (Exception e) {
             throw new RuntimeException("Invalid expression");
@@ -119,6 +132,11 @@ public class CalculatorModel implements CalculatorContract.Model {
         }
 
         expression = expression.substring(0, expression.length() - 1);
+    }
+
+    @Override
+    public void history(){
+        // Method này được xử lý ở presenter/view level
     }
 
     @Override

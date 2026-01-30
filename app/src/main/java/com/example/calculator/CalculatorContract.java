@@ -15,7 +15,7 @@ public interface CalculatorContract {
         void onClearClicked();
         void onDeleteClicked();
         void onPercentClicked();
-
+        void onHistoryClicked();
         void attachView(View view);
         void detachView();
     }
@@ -27,6 +27,7 @@ public interface CalculatorContract {
         void calculate();
         void clear();
         void delete();
+        void history();
 
         String getCurrentExpression();
         String getCurrentResult();
